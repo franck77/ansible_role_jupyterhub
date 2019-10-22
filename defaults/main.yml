@@ -1,0 +1,47 @@
+---
+
+### JUPYTER HUB
+role_jupyterhub_install_dir: "/applis/jupyterhub" #Base path for jupyterhub installation
+role_jupyterhub_home_dir: "{{ role_jupyterhub_install_dir }}"
+role_jupyterhub_install_mode: "0700"
+role_jupyterhub_db_name: "{{ role_jupyterhub_install_dir}}/database"
+role_jupyterhub_app_user_user: "jupyterhub"
+role_jupyterhub_app_user_group: "jupyterhub"
+role_jupyterhub_run_uid: "4012" #uid user jupyterhub
+role_jupyterhub_run_guid: "4012" #gid group jupyterhub
+role_jupyterhub_port: "8788" #port public for user's connexions
+role_jupyterhub_application_log_level: "DEBUG" #log jupyter
+role_jupyterhub_kernel_pyenvs_to_activate: #list env activate in jupyter
+  - py27
+  - py35
+  - py36
+role_jupyterhub_install_env: "py36_jupyter" # Name of env python for jupyter
+role_conda_pyenvs: ### Specifique packages
+ - name: "py36_jupyter"
+   version: "3.6"
+   description: "anaconda"
+   state: present
+   libs:
+     - {name: "numpy", type: "conda", state: "present"}
+role_jupyterhub_mailing_list: "wandrille.a.domin@socgen.com, franck.vieira@socgen.com, marianne.bioy-ext@socgen.com, philippe.trigo@ext-socgen.com" #list contact when jupyterhub try to restart
+gpu_access: "false"
+
+### SPAWNER
+role_jupyterhub_spawnerclass: "sudospawner.SudoSpawner" #type of spawner
+role_jupyterhub_sudospawner_debug: "True"
+role_jupyterhub_spawner_debug: "True"
+
+### PAM
+role_jupyterhub_pam_conf_path: "/etc/pam.d"
+role_jupyterhub_pam_filename: "{{ role_jupyterhub_pam_conf_path }}/jupyterhub"
+role_jupyterhub_pam_group_path: "{{ role_jupyterhub_pam_conf_path }}/jupyterhub.login.allowed"
+
+### ANACONDA
+role_jupyterhub_anaconda_parent_dir: "/applis/hadd/produits" #Base path for anaconda installation
+role_jupyterhub_anaconda_dir_name: "anaconda3" #Anaconda default dir
+
+### CERTIFICATS
+role_jupyterhub_cert_dir: "/etc/pki/tls/certs"
+role_jupyterhub_ssl_cert: "{{role_jupyterhub_cert_dir}}/{{ role_jupyterhub_ip }}.crt"
+role_jupyterhub_ssl_key: "{{ role_jupyterhub_cert_dir }}/{{ role_jupyterhub_ip }}.key"
+

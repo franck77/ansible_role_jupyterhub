@@ -1,0 +1,10 @@
+---
+# tasks to install anaconda
+
+- name: "Remove jupyterhub..."
+  become: True
+  shell : "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin/conda remove -y jupyterhub"
+  args:
+    removes: "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}"
+  environment:
+    PATH: "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin:{{ ansible_env.PATH }}"

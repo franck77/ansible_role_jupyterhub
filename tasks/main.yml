@@ -1,0 +1,35 @@
+---
+# tasks file for juyterhub setting
+
+- name: "Installing juyterhub..."
+  include: install.yml
+  when: state in ["role_jupyterhub_install", "role_jupyterhub_whole_install"]
+
+- name: "Configuring juyterhub..."
+  include: config.yml
+  when: state in ["role_jupyterhub_config", "role_jupyterhub_whole_install"]
+
+- name: "Starting juyterhub..."
+  include: start.yml
+  when: state in ["role_jupyterhub_config", "role_jupyterhub_start", "role_jupyterhub_whole_install"]
+
+- name: "Stopping juyterhub..."
+  include: stop.yml
+  when: state in ["role_jupyterhub_remove", "role_jupyterhub_stop", "role_jupyterhub_whole_remove"]
+
+- name: "Removing juyterhub..."
+  include: remove.yml
+  when: state in ["role_jupyterhub_remove", "role_jupyterhub_whole_remove"]
+
+- name: "Deploy watchdog"
+  include: "deploy_watchdog.yml"
+  when: state in ["role_jupyterhub_update"]
+
+- name: "Upgrading jupyterhub..."
+  include: upgrade.yml
+  when: state in ["role_jupyterhub_upgrade"]
+
+- name: "Add Nagios Checks"
+  include: check_nagios.yml
+  when: state in ["role_jupyterhub_nagios", "role_jupyterhub_whole_install"]
+

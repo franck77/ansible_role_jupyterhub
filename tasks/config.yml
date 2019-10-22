@@ -1,0 +1,500 @@
+---
+
+- name: "Check that input variables are well transmitted to upgrade jupyter hub"
+  assert:
+    that: "{{ item }} is defined"
+  with_items:
+    - role_jupyterhub_anaconda_parent_dir
+    - role_jupyterhub_anaconda_dir_name
+    - role_jupyterhub_install_env
+    - role_jupyterhub_conf_path
+    - role_jupyterhub_conf_path_mode
+    - role_jupyterhub_conf_file
+    - role_jupyterhub_log_file
+    - role_jupyterhub_ssl_cert
+    - role_jupyterhub_ssl_key
+    - role_jupyterhub_ip
+    - role_jupyterhub_port
+    - role_jupyterhub_hub_port
+    - role_jupyterhub_cookie_file
+    - role_jupyterhub_cookie_dir
+    - role_jupyterhub_cookie_dir_mode
+    - role_jupyterhub_cookie_file_mode
+    - role_jupyterhub_cookie_secret
+    - role_jupyterhub_app_user
+    - role_jupyterhub_app_group
+    - role_jupyterhub_pam_filename
+    - role_jupyterhub_spawnerclass
+    - role_jupyterhub_path_db
+    - role_jupyterhub_path_db_mode
+    - role_jupyterhub_file_db
+    - role_jupyterhub_proxy_auth_token
+    - role_jupyterhub_http_proxy_cmd
+    - role_jupyterhub_admin_users
+    - role_jupyterhub_pam_session
+    - role_jupyterhub_sudo
+    - role_jupyterhub_run_dir
+    - role_jupyterhub_install_mode
+    - role_jupyterhub_install_dir
+    - role_jupyterhub_script_dir
+    - role_jupyterhub_script_log_dir
+    - role_jupyterhub_script_bin_dir
+    - role_jupyterhub_script_cfg_dir
+    - role_jupyerhub_config_watchdog_mail_alerte
+    - role_jupyterhub_script_watchdog
+    - role_jupyterhub_manage_instance_script
+
+### CONDA
+
+- name: "Enable ipyparallel for JupyterHub..."
+  become: "true"
+  shell : "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin/jupyter nbextension install --sys-prefix --py ipyparallel"
+  args:
+    removes: "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}"
+  environment:
+    PATH: "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin:{{ ansible_env.PATH }}"
+
+- name: "Enable nbextension for JupyterHub..."
+  become: "true"
+  shell : "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin/jupyter nbextension enable --sys-prefix --py ipyparallel"
+  args:
+    removes: "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}"
+  environment:
+    PATH: "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin:{{ ansible_env.PATH }}"
+
+- name: "Enable serverextension for JupyterHub..."
+  become: "true"
+  shell : "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin/jupyter serverextension enable --sys-prefix --py ipyparallel"
+  args:
+    removes: "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}"
+  environment:
+    PATH: "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin:{{ ansible_env.PATH }}"
+
+- name: "enable nodejs applications to bind on ports < 1024"
+  become: "true"
+  shell: "source {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/bin/activate {{ role_jupyterhub_install_env }}  && sudo setcap 'cap_net_bind_service=+ep' `which node`"
+
+- name: "Add Python Kernel to Jupyterhub..."
+  become: "true"
+  shell : "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ item }}/bin/ipython kernel install --name {{ item }} --display-name {{ item }} "
+  environment:
+    PATH: "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin:{{ ansible_env.PATH }}"
+  with_items: "{{role_jupyterhub_kernel_pyenvs_to_activate}}"
+
+### CONF
+
+- name: "Create directory for conf jupyterhub"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  file:
+    path: "{{ role_jupyterhub_conf_path }}"
+    state: "directory"
+    mode: "{{ role_jupyterhub_conf_path_mode }}"
+    owner: "{{ role_jupyterhub_app_user }}"
+    group: "{{ role_jupyterhub_app_group }}"
+
+- name: "Check if the conf file {{ role_jupyterhub_conf_file }} exist"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  stat:
+    path: "{{ role_jupyterhub_conf_file }}"
+  register: jupyterhub_conf_file
+
+- name: "Generate a new conf file"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  shell: "source {{ role_jupyterhub_anaconda_parent_dir }}/{{ role_jupyterhub_anaconda_dir_name }}/bin/activate {{ role_jupyterhub_install_env }} && {{ role_jupyterhub_anaconda_parent_dir }}/{{ role_jupyterhub_anaconda_dir_name }}/envs/{{ role_jupyterhub_install_env }}/bin/jupyterhub --generate-config -f {{ role_jupyterhub_conf_file }}"
+  register: create_conf_file
+  failed_when: create_conf_file.rc != 0
+  when: jupyterhub_conf_file.stat.exists == false
+
+- name: "Set URL to access to jupyterhub"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  replace:
+    path: "{{ role_jupyterhub_conf_file }}"
+    regexp: ".*c.JupyterHub.ip = '.*'"
+    replace: "c.JupyterHub.ip = '{{ role_jupyterhub_ip }}'"
+  notify:
+    - restart jupyterhub.service
+
+- name: "Set URL hub for jupyterhub"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  replace:
+    path: "{{ role_jupyterhub_conf_file }}"
+    regexp: ".*c.JupyterHub.hub_ip.*"
+    replace: "c.JupyterHub.hub_ip = '{{ role_jupyterhub_ip }}'"
+  notify:
+    - restart jupyterhub.service
+
+- name: "Set port jupyterhub"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  replace:
+    path: "{{ role_jupyterhub_conf_file }}"
+    regexp: ".*c.JupyterHub.port.*"
+    replace: "c.JupyterHub.port = {{ role_jupyterhub_port }}"
+  notify:
+    - restart jupyterhub.service
+
+- name: "Set hub port for jupyterhub"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  replace:
+    path: "{{ role_jupyterhub_conf_file }}"
+    regexp: ".*c.JupyterHub.hub_port.*"
+    replace: "c.JupyterHub.hub_port = {{ role_jupyterhub_hub_port }}"
+  notify:
+    - restart jupyterhub.service
+
+- name: "Create run dir and grant user permissions"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  file:
+    path: "{{ role_jupyterhub_run_dir }}"
+    state: "directory"
+    owner: "{{ role_jupyterhub_app_user_user }}"
+    group: "{{ role_jupyterhub_app_user_group }}"
+    mode: "{{ role_jupyterhub_install_mode }}"
+
+- name: "generate bash profile"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  template:
+    src: "templates/bashtemplate.j2"
+    dest: "{{ role_jupyterhub_home_dir }}/.bash_profile"
+
+###
+
+### CERTIFICAT & KEY
+
+- name: "Set path for certificate in jupyterhub conf file"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  replace:
+    path: "{{ role_jupyterhub_conf_file }}"
+    regexp: ".*c.JupyterHub.ssl_cert = '.*'"
+    replace: "c.JupyterHub.ssl_cert = '{{ role_jupyterhub_ssl_cert }}'"
+  notify:
+    - restart jupyterhub.service
+
+- name: "Set path for key in jupyterhub conf file"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  replace:
+    path: "{{ role_jupyterhub_conf_file }}"
+    regexp: ".*c.JupyterHub.ssl_key = '.*'"
+    replace: "c.JupyterHub.ssl_key = '{{ role_jupyterhub_ssl_key }}'"
+  notify:
+    - restart jupyterhub.service
+
+###
+
+### PAM
+
+- name: "Set PAM file authentificator for Jupyter hub"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  replace:
+    path: "{{ role_jupyterhub_conf_file }}"
+    regexp: ".*c.PAMAuthenticator.service.*"
+    replace: "c.PAMAuthenticator.service = '{{ role_jupyterhub_pam_filename }}'"
+  notify:
+    - restart jupyterhub.service
+
+- name: "Set PAM session"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  replace:
+    path: "{{ role_jupyterhub_conf_file }}"
+    regexp: ".*c.PAMAuthenticator.open_sessions.*"
+    replace: "c.PAMAuthenticator.open_sessions = {{ role_jupyterhub_pam_session }}"
+  notify:
+    - restart jupyterhub.service
+
+###
+
+### USERS
+
+- name: "Set spawner class to allow single-user for jupyter hub"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  replace:
+    path: "{{ role_jupyterhub_conf_file }}"
+    regexp: ".*c.JupyterHub.spawner_class.*"
+    replace: "c.JupyterHub.spawner_class = '{{ role_jupyterhub_spawnerclass }}'"
+  notify:
+    - restart jupyterhub.service
+
+###
+
+### PROXY
+
+- name: "set PROXY AUTH TOKEN"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  replace:
+    path: "{{ role_jupyterhub_conf_file }}"
+    regexp: ".*c.JupyterHub.proxy_auth_token.*"
+    replace: "c.ConfigurableHTTPProxy.auth_token = '{{ role_jupyterhub_proxy_auth_token }}'"
+  when: jupyterhub_conf_file.stat.exists == false
+  notify:
+    - restart jupyterhub.service
+
+- name: "set PROXY AUTH TOKEN"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  replace:
+    path: "{{ role_jupyterhub_conf_file }}"
+    regexp: ".*c.ConfigurableHTTPProxy.auth_token.*"
+    replace: "c.ConfigurableHTTPProxy.auth_token = '{{ role_jupyterhub_proxy_auth_token }}'"
+  notify:
+    - restart jupyterhub.service
+
+- name: "set PROXY CMD"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  replace:
+    path: "{{ role_jupyterhub_conf_file }}"
+    regexp: ".*c.JupyterHub.proxy_cmd.*"
+    replace: "c.ConfigurableHTTPProxy.command = '{{ role_jupyterhub_http_proxy_cmd }}'"
+  when: jupyterhub_conf_file.stat.exists == false
+  notify:
+    - restart jupyterhub.service
+
+- name: "set PROXY CMD"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  replace:
+    path: "{{ role_jupyterhub_conf_file }}"
+    regexp: ".*c.ConfigurableHTTPProxy.command.*"
+    replace: "c.ConfigurableHTTPProxy.command = '{{ role_jupyterhub_http_proxy_cmd }}'"
+  notify:
+    - restart jupyterhub.service
+
+###
+
+- name: "set admin users"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  replace:
+    path: "{{ role_jupyterhub_conf_file }}"
+    regexp: ".*c.Authenticator.admin_users.*"
+    replace: "c.Authenticator.admin_users = {{ role_jupyterhub_admin_users }}"
+  notify:
+    - restart jupyterhub.service
+
+### DATABASE
+
+- name: "Create directory for database"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  file:
+    path: "{{ role_jupyterhub_path_db }}"
+    state: "directory"
+    mode: "{{ role_jupyterhub_path_db_mode }}"
+    owner: "{{ role_jupyterhub_app_user }}"
+    group: "{{ role_jupyterhub_app_group }}"
+
+- name: "Set path to the db sqlite"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  replace:
+    path: "{{ role_jupyterhub_conf_file }}"
+    regexp: ".*c.JupyterHub.db_url.*"
+    replace: "c.JupyterHub.db_url = '{{ role_jupyterhub_file_db }}'"
+  notify:
+    - restart jupyterhub.service
+
+###
+
+### LOG
+
+- name: "Create log dir"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  file:
+    path: "{{ role_jupyterhub_log_path }}"
+    state: "directory"
+    mode: "{{ role_jupyterhub_log_dir_mode }}"
+    owner: "{{ role_jupyterhub_app_user }}"
+    group: "{{ role_jupyterhub_app_group }}"
+
+- name: "Set log path"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  replace:
+    path: "{{ role_jupyterhub_conf_file }}"
+    regexp: ".*c.JupyterHub.extra_log_file.*"
+    replace: "c.JupyterHub.extra_log_file = '{{ role_jupyterhub_log_file }}'"
+  notify:
+    - restart jupyterhub.service
+
+###
+
+### COOKIE
+
+- name: "Create a directory for the secret cookie"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  file:
+    path: "{{ role_jupyterhub_cookie_dir  }}"
+    state: "directory"
+    mode: "{{ role_jupyterhub_cookie_dir_mode }}"
+    owner: "{{ role_jupyterhub_app_user }}"
+    group: "{{ role_jupyterhub_app_group }}"
+
+- name: "Check if the cookie file {{ role_jupyterhub_cookie_file }} exist"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  stat:
+    path: "{{ role_jupyterhub_cookie_file }}"
+  register: jupyterhub_cookie_file
+
+- name: "Create a new secret cookie"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  shell: "echo \"{{ role_jupyterhub_cookie_secret }}\" > {{ role_jupyterhub_cookie_file }}"
+  register: generate_cookie
+  failed_when: generate_cookie.rc != 0
+  when: jupyterhub_cookie_file.stat.exists == false
+
+- name: "Check right and mode for the cookie file"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  file:
+    path: "{{ role_jupyterhub_cookie_file }}"
+    mode: "{{ role_jupyterhub_cookie_file_mode }}"
+    owner: "{{ role_jupyterhub_app_user }}"
+    group: "{{ role_jupyterhub_app_group }}"
+
+- name: "Set path to cookie file {{ role_jupyterhub_cookie_file }}"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  replace:
+    path: "{{ role_jupyterhub_conf_file }}"
+    regexp: ".*c.JupyterHub.cookie_secret_file = '.*'"
+    replace: "c.JupyterHub.cookie_secret_file = '{{ role_jupyterhub_cookie_file }}'"
+  notify:
+    - restart jupyterhub.service
+
+###
+
+### Service systemctl
+
+- name: "install systemd jupyterhub.service"
+  become: true
+  template:
+    src: jupyterhub.service.j2
+    dest: "{{ role_jupyterhub_application_service_path }}/{{ role_jupyterhub_application_service_name }}"
+    mode: 0644
+  notify:
+    - restart jupyterhub.service
+
+###
+
+### Authenticator Class
+- name: "set UpperCaseAuthenticator"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  blockinfile:
+    path: "{{ role_jupyterhub_conf_file }}"
+    block: |
+      ## transfom the login in uppercase
+      from jupyterhub.auth import PAMAuthenticator
+      import re
+
+      class UpperCaseAuthenticator(PAMAuthenticator):
+          def normalize_username(self, username):
+              if re.match("([a-zA-Z]?)([0-9]+)" , username) != None :
+                  return username.upper()
+              if re.match("(\w+\.\w+)" , username) != None :
+                  return username.lower()
+              return username
+
+      c.JupyterHub.authenticator_class = UpperCaseAuthenticator
+  notify:
+    - restart jupyterhub.service
+
+###
+
+### GPU access for jupyterhub
+- name: "Set access to GPU from jupyter hub"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  blockinfile:
+    path: "{{ role_jupyterhub_conf_file }}"
+    block: |
+      import os
+      for var in os.environ:
+        c.Spawner.env_keep.append(var)
+  when: gpu_access is defined and gpu_access == 'true'
+  notify:
+    - restart jupyterhub.service
+
+###
+
+### SUDOERS
+
+- name: "Deploy sudo for Jupyterhub"
+  become: true
+  include_role:
+    name: socle_sudo
+  vars:
+    sudo_state: "install"
+
+- name: Deploy the rules
+  become: true
+  include_role:
+    name: socle_sudo
+    tasks_from: deploy_rules.yml
+  vars:
+    socle_sudo_config: "{{ role_jupyterhub_sudo }}"
+
+###
+
+### EXPLOITATION
+
+- name: "Create scripts directory"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  file:
+    path: "{{ role_jupyterhub_script_dir }}"
+    state: "directory"
+    mode: "0750"
+    owner: "{{ role_jupyterhub_app_user_user }}"
+    group: "{{ role_jupyterhub_app_user_group }}"
+
+- name: "Create log directory for exploitation scripts"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  file:
+    path: "{{ role_jupyterhub_script_log_dir }}"
+    state: "directory"
+    mode: "0750"
+    owner: "{{ role_jupyterhub_app_user_user }}"
+    group: "{{ role_jupyterhub_app_user_group }}"
+
+- name: "Create bin directory for exploitation scripts"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  file:
+    path: "{{ role_jupyterhub_script_bin_dir }}"
+    state: "directory"
+    mode: "0750"
+    owner: "{{ role_jupyterhub_app_user_user }}"
+    group: "{{ role_jupyterhub_app_user_group }}"
+
+- name: "Create cfg directory for exploitation scripts"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  file:
+    path: "{{ role_jupyterhub_script_cfg_dir }}"
+    state: "directory"
+    mode: "0750"
+    owner: "{{ role_jupyterhub_app_user_user }}"
+    group: "{{ role_jupyterhub_app_user_group }}"
+
+- name: "Copy exploitation script for Jupyter Hub"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  template:
+    src: "templates/{{ role_jupyterhub_manage_instance_script }}.j2"
+    dest: "{{ role_jupyterhub_script_bin_dir }}/{{ role_jupyterhub_manage_instance_script }}"
+    owner: "{{ role_jupyterhub_app_user_user }}"
+    group: "{{ role_jupyterhub_app_user_group }}"
+    mode: "0750"
+
+- name: "Add watchdog to auto-restart jupyterhub on fail"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  template:
+    src: "templates/{{ role_jupyterhub_script_watchdog }}.j2"
+    dest: "{{ role_jupyterhub_script_bin_dir }}/{{ role_jupyterhub_script_watchdog }}"
+    owner: "{{ role_jupyterhub_app_user_user }}"
+    group: "{{ role_jupyterhub_app_user_group }}"
+    mode: "0750"
+
+- name: "Copy config mail alerte for jupyterhub"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  copy:
+    src: "files/{{ role_jupyerhub_config_watchdog_mail_alerte }}"
+    dest: "{{ role_jupyterhub_script_cfg_dir }}/{{ role_jupyerhub_config_watchdog_mail_alerte }}"
+    owner: "{{ role_jupyterhub_app_user_user }}"
+    group: "{{ role_jupyterhub_app_user_group }}"
+    mode: "0750"
+
+- name: "Create crontab to restart jupyterhub if needed"
+  become_user: "{{ role_jupyterhub_app_user }}"
+  cron:
+    name: "Restart auto jupyterhub"
+    user: "{{ role_jupyterhub_app_user_user }}"
+    job: "{{ role_jupyterhub_script_bin_dir }}/{{ role_jupyterhub_script_watchdog }} {{ inventory_hostname }}.haas.socgen {{ role_jupyterhub_port }} jupyter 1>>{{ role_jupyterhub_script_log_dir }}/{{ role_jupyerhub_script_watchdog_log }} 2>>{{ role_jupyterhub_script_log_dir }}/{{ role_jupyerhub_script_watchdog_error }}"
+
+###
+

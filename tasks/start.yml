@@ -1,0 +1,9 @@
+---
+# tasks to start jupyterhub service
+
+- name: "Start jupyterhub instance ..."
+  become: true
+  service:
+    name: jupyterhub
+    state: started
+    enabled: yes

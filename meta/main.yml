@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  author: CCBD
+  description: Role jupyterhub management
+  company: Societe Genetale
+  license:
+    - MIT
+  min_ansible_version: 2.0
+  platforms:
+    - name: EL
+      versions:
+        - all
+    - name: Fedora
+      versions:
+        - all
+  galaxy_tags:
+    - anaconda
+    - jupyter
+    - jupyterhub
+    - python
+    - notebook

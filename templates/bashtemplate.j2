@@ -1,0 +1,13 @@
+# .bash_profile
+
+# Get the aliases and functions
+if [ -f ~/.bashrc ]; then
+        . ~/.bashrc
+fi
+
+# User specific environment and startup programs
+
+PATH=$PATH:$HOME/.local/bin:$HOME/bin:{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/bin:{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin
+
+export PATH
+

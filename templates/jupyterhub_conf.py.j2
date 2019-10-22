@@ -1,0 +1,39 @@
+## Set the log level by value or name.
+c.Application.log_level = '{{ role_jupyterhub_application_log_level}}'
+
+c.SudoSpawner.debug= {{ role_jupyterhub_sudospawner_debug }}
+
+c.JupyterHub.admin_users = {{ role_jupyterhub_admin_users }}
+
+c.JupyterHub.extra_log_file = '{{ role_jupyterhub_log_file }}'
+c.JupyterHub.ip = '{{ role_jupyterhub_ip }}'
+c.JupyterHub.pid_file = '{{ role_jupyterhub_pid_file }}'
+
+c.JupyterHub.port = {{ role_jupyterhub_port }}
+
+c.JupyterHub.spawner_class = '{{ role_jupyterhub_spawnerclass }}'
+c.Spawner.debug = '{{ role_jupyterhub_spawner_debug }}'
+
+c.JupyterHub.ssl_cert = '{{ role_jupyterhub_ssl_cert }}'
+c.JupyterHub.ssl_key = '{{ role_jupyterhub_ssl_key }}'
+
+c.JupyterHub.cookie_secret_file = '{{ role_jupyterhub_install_dir}}/cookie_secret'
+c.JupyterHub.db_url = '{{ role_jupyterhub_install_dir}}/database'
+
+c.PAMAuthenticator.service = '{{ role_jupyterhub_pam_filename }}'
+
+c.PAMAuthenticator.debug = True
+
+## transfom the login in uppercase
+from jupyterhub.auth import PAMAuthenticator
+import re
+
+class UpperCaseAuthenticator(PAMAuthenticator):
+    def normalize_username(self, username):
+        if re.match("([a-zA-Z]?)([0-9]+)" , username) != None :
+            return username.upper()
+        if re.match("(\w+\.\w+)" , username) != None :
+            return username.lower()
+        return login
+
+c.JupyterHub.authenticator_class = UpperCaseAuthenticator

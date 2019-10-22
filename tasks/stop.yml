@@ -1,0 +1,9 @@
+---
+# tasks to stop jupyterhub service
+
+- name: "Stop jupyterhub instance ..."
+  become: true
+  service:
+    name: jupyterhub
+    state: stopped
+

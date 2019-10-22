@@ -1,0 +1,134 @@
+---
+# tasks to install jupyter
+
+- name:  "Check that input variables are well transmitted to launch the role role_jupyterhubV2"
+  assert:
+    that: "{{ item }} is defined"
+  with_items:
+    - role_jupyterhub_anaconda_parent_dir
+    - role_jupyterhub_anaconda_dir_name
+    - role_jupyterhub_conf_file
+    - role_jupyterhub_pid_file
+    - role_jupyterhub_log_file
+    - role_jupyterhub_cert_dir
+    - role_jupyterhub_pam_filename
+    - role_jupyterhub_pam_conf_path
+    - role_jupyterhub_pam_group_path
+    - role_jupyterhub_application_log_level
+    - role_jupyterhub_sudospawner_debug
+    - role_jupyterhub_admin_users
+    - role_jupyterhub_ip
+    - role_jupyterhub_port
+    - role_jupyterhub_ssl_cert
+    - role_jupyterhub_ssl_key
+    - role_jupyterhub_spawnerclass
+    - role_jupyterhub_install_env
+    - role_conda_pyenvs
+    - role_jupyterhub_app_user_user
+    - role_jupyterhub_run_uid
+    - role_jupyterhub_run_guid
+    - role_jupyterhub_home_dir
+    - role_jupyterhub_app_user_group
+
+#enabling PAM for non-root
+- name: "add jupyterhub user inside passwd"
+  become: true
+  lineinfile:
+    dest: "/etc/passwd"
+    state: present
+    line: "{{role_jupyterhub_app_user_user}}:x:{{role_jupyterhub_run_uid}}:{{role_jupyterhub_run_guid}}::{{ role_jupyterhub_home_dir }}:/bin/bash"
+
+- name: "add jupyterhub user inside /etc/shadow"
+  become: true
+  lineinfile:
+    dest: "/etc/shadow"
+    state: present
+    line: "{{role_jupyterhub_app_user_user}}:!!:::::::"
+
+- name: "adding shadow group"
+  become: true
+  action: group name=shadow state=present
+
+- name: "make the shadow file group readable"
+  become: true
+  shell: "chgrg shadow /etc/shadow; chmod g+r /etc/shadow; usermod -a -G shadow {{role_jupyterhub_app_user_user}}"
+
+- name: "ensure the .bash_profile file is present"
+ # become_user: jupyterhub
+  become: true
+  file:
+    path: "{{role_jupyterhub_home_dir}}/.bash_profile"
+    state: touch
+
+- name: "Check if role_jupyterhub  users already exist"
+  shell: "cat /etc/passwd | grep {{ role_jupyterhub_app_user_user }}"
+  register: check_user
+  changed_when: check_user.rc != 0
+  failed_when: False
+  become: true
+
+- name: "Create role_jupyterhub  groups"
+  group: "name={{ role_jupyterhub_app_user_user }} system=yes gid={{ role_jupyterhub_run_guid }}"
+  when: check_group.changed
+  become: true
+
+- name: "Create role_jupyterhub  User"
+  user:
+    name: "{{ role_jupyterhub_app_user_user }}"
+    uid: "{{ role_jupyterhub_run_uid }}"
+    shell: "/bin/bash"
+    group: "{{ role_jupyterhub_app_user_group }}"
+    home: "{{ role_jupyterhub_home_dir }}"
+  when: check_user.changed
+  become: true
+
+- name: "Install jupyterhub..."
+  become: True
+  shell : "source {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/bin/activate {{ role_jupyterhub_install_env }} && {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin/conda install -y jupyterhub"
+  args:
+    removes: "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}"
+  environment:
+    PATH: "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin:{{ ansible_env.PATH }}"
+
+- name: "Install notebook..."
+  become: True
+  shell : "source {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/bin/activate {{ role_jupyterhub_install_env }} && {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin/conda install -y notebook"
+  args:
+    removes: "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}"
+  environment:
+    PATH: "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin:{{ ansible_env.PATH }}"
+
+- name: "Install jupyter..."
+  become: True
+  shell : "source {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/bin/activate {{ role_jupyterhub_install_env }} && {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin/conda install -y jupyter"
+  args:
+    removes: "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}"
+  environment:
+    PATH: "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin:{{ ansible_env.PATH }}"
+
+- name: "Install ipyparallel..."
+  become: True
+  shell : "source {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/bin/activate {{ role_jupyterhub_install_env }} && {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin/conda install -y ipyparallel"
+  args:
+    removes: "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}"
+  environment:
+    PATH: "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/bin:{{ ansible_env.PATH }}"
+
+- name: "Install sudo spawner"
+  become: True
+  shell : "source {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/bin/activate {{ role_jupyterhub_install_env }} && {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin/pip install sudospawner"
+  args:
+    removes: "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}"
+  environment:
+    PATH: "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/bin:{{ ansible_env.PATH }}"
+
+- name: "Create install dir {{ role_jupyterhub_install_dir }} and grant user permissions"
+  become: True
+  file:
+    path: "{{ role_jupyterhub_install_dir }}"
+    state: "directory"
+    owner: "{{ role_jupyterhub_app_user_user }}"
+    group: "{{ role_jupyterhub_app_user_group }}"
+    mode: "{{ role_jupyterhub_install_mode }}"
+
+

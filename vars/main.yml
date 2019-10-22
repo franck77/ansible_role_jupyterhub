@@ -1,0 +1,70 @@
+---
+
+### USER / GROUP
+role_jupyterhub_app_user: "jupyterhub"
+role_jupyterhub_app_group: "jupyterhub"
+
+### SYSTEMD
+role_jupyterhub_application_service_path: "/etc/systemd/system"
+role_jupyterhub_application_service_name: "jupyterhub.service"
+
+### Conf file
+role_jupyterhub_old_conf_file: "{{ role_jupyterhub_install_dir }}/jupyterhub_conf.py"
+role_jupyterhub_conf_path: "{{ role_jupyterhub_install_dir }}/conf"
+role_jupyterhub_conf_file : "{{ role_jupyterhub_conf_path }}/jupyterhub_config.py"
+role_jupyterhub_conf_path_mode: "0740"
+
+### RUN
+role_jupyterhub_run_dir: "{{ role_jupyterhub_install_dir }}/run"
+
+### PID
+role_jupyterhub_pid_file : "{{ role_jupyterhub_install_dir }}/run/jupyterhub_pid"
+
+### Cookie
+role_jupyterhub_cookie_dir: "{{ role_jupyterhub_install_dir }}/cookie"
+role_jupyterhub_cookie_file: "{{ role_jupyterhub_cookie_dir }}/cookie_secret"
+role_jupyterhub_cookie_dir_mode: "0750"
+role_jupyterhub_cookie_file_mode: "0640"
+
+### Database
+role_jupyterhub_path_db: "{{ role_jupyterhub_install_dir }}/db"
+role_jupyterhub_file_db: "{{ role_jupyterhub_path_db }}/database"
+role_jupyterhub_path_db_mode: "0740"
+
+### logs
+role_jupyterhub_log_path: "/var/log/jupyterhub"
+role_jupyterhub_log_file : "{{ role_jupyterhub_log_path }}/jupyterhub_log"
+role_jupyterhub_log_dir_mode: "0755"
+
+### Exploitation scripts
+role_jupyterhub_script_dir: "{{ role_jupyterhub_install_dir }}/scripts"
+role_jupyterhub_script_log_dir: "{{ role_jupyterhub_script_dir }}/log"
+role_jupyterhub_script_cfg_dir: "{{ role_jupyterhub_script_dir }}/cfg"
+role_jupyterhub_script_bin_dir: "{{ role_jupyterhub_script_dir }}/bin"
+role_jupyterhub_manage_instance_script: "jupyterhub.ksh"
+role_jupyterhub_script_watchdog: "ds_appliance_watchdog.sh"
+role_jupyerhub_script_watchdog_log: "ds_appliance_watchdog.log"
+role_jupyerhub_script_watchdog_error: "ds_appliance_watchdog.err"
+role_jupyerhub_config_watchdog_mail_alerte: "mail_alerte"
+
+### Proxy for Jupyter
+role_jupyterhub_http_proxy_cmd: "{{ role_anaconda_env_bin_dir }}/configurable-http-proxy" #Configurable-http-proxy-cmd
+
+### PAM
+role_jupyterhub_pam_session: "False"
+
+## Sudoers
+role_jupyterhub_sudo: 
+  - socle_sudo_comment: "JUPYTERHUB"
+    socle_sudo_template_file_name: "00_sudo_template.j2"
+    socle_sudo_dest_file_name: "03_jupyterhub"
+    socle_sudo_remove_this_config: false
+    socle_sudo_defaults: ""
+    socle_sudo_user_alias: "HAD_JUPYTERHUB"
+    socle_sudo_users: "jupyterhub"
+    socle_sudo_usernames: "user jupyterhub"
+    socle_sudo_servers_alias: "HOSTS_HAD_JUPYTERHUB"
+    socle_sudo_servers_inventory_group: "DS"
+    socle_sudo_su_users: "ALL"
+    socle_sudo_nopassword: true
+    socle_sudo_command: "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin/sudospawner, /usr/bin/systemctl start jupyterhub.service, /usr/bin/systemctl stop jupyterhub.service, /usr/bin/systemctl restart jupyterhub.service, /usr/bin/systemctl status jupyterhub.service"

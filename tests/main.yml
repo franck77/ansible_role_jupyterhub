@@ -1,0 +1,7 @@
+---
+
+- hosts: test_nodes
+  become: yes
+  gather_facts: True
+  roles:
+    - { role: role_jupyterhub}

@@ -1,0 +1,20 @@
+---
+#Base path for anaconda installation
+anaconda_parent_dir: "/applis/hadd/produits"
+
+#Anaconda default dir
+anaconda_dir_name: "anaconda3"
+
+root_home: /root
+
+jupyterhub_conf_file : /tmp/jupyterhub_conf.py
+
+jupyterhub_port: 10000
+
+jupyterhub_pid_file : /tmp/jupyterhub_pid
+
+jupyterhub_log_file : /tmp/jupyterhub_log
+
+pyenvs:
+  - py27
+  - py35

@@ -1,0 +1,96 @@
+---
+# task to upgrade jupyterhub
+
+- name: "Check that input variables are well transmitted to upgrade jupyter hub"
+  assert:
+    that: "{{ item }} is defined"
+  with_items:
+    - role_jupyterhub_anaconda_parent_dir
+    - role_jupyterhub_anaconda_dir_name
+    - role_jupyterhub_install_env
+    - role_jupyterhub_install_dir
+    - role_jupyterhub_db_name
+    - role_jupyterhub_conf_file
+    - role_jupyterhub_install_env
+    - ansible_hostname
+    - role_jupyterhub_ssl_cert
+    - role_jupyterhub_ssl_key
+    - role_jupyterhub_ip
+    - role_jupyterhub_port
+    - role_jupyterhub_cookie_file
+    - role_jupyterhub_cookie_mode
+    - role_jupyterhub_app_user
+    - role_jupyterhub_app_group
+    - role_jupyterhub_pam_conf_path
+    - role_jupyterhub_pam_filename
+    - role_jupyterhub_version
+    - role_jupyterhub_sudospawner_version
+    - role_jupyterhub_conf_http_proxy_version
+    - role_jupyterhub_pyzmq_version
+    - role_jupyterhub_ipykernel_version
+    - role_jupyterhub_tornado_version
+
+### BACKUP
+
+- name: "Backuping Jupyterhub database..."
+  become: True
+  shell: "sqlite3 {{ role_jupyterhub_install_dir }}/{{ role_jupyterhub_db_name }} \".backup '{{ role_jupyterhub_install_dir }}/{{ role_jupyterhub_db_name }}.bkp'\""
+  args:
+    removes: "{{ role_jupyterhub_install_dir }}/{{ role_jupyterhub_db_name }}"
+
+- name: "Backuping Jupyterhub config file..."
+  become: True
+  copy:
+    remote_src: "yes"
+    src: "{{ role_jupyterhub_old_conf_file }}"
+    dest: "{{ role_jupyterhub_old_conf_file }}.bkp"
+
+### UPGRADE
+
+- name: "Stopping jupyterhub..."
+  include: stop.yml
+
+- name: "Upgrading Jupyterhub..."
+  become: True
+  shell: "source {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/bin/activate {{ role_jupyterhub_install_env }} && {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin/conda install -y jupyterhub={{ role_jupyterhub_version }}"
+  register: output_jupyter_upgrade
+  failed_when: output_jupyter_upgrade.rc > 0
+
+- name: "Install sudospawner..."
+  become: True
+  shell: "source {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/bin/activate {{ role_jupyterhub_install_env }} && {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin/conda install -y sudospawner={{ role_jupyterhub_sudospawner_version }}"
+  register: output_sudospawner_upgrade
+  failed_when: output_sudospawner_upgrade.rc > 0
+
+- name: "Upgrade configurable-http-proxy ..."
+  become: True
+  shell: "source {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/bin/activate {{ role_jupyterhub_install_env }} && {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin/conda install -y configurable-http-proxy={{ role_jupyterhub_conf_http_proxy_version }}"
+  register: output_conf_http_proxy_upgrade
+  failed_when: output_conf_http_proxy_upgrade.rc > 0
+
+- name: "Upgrade pyzmq ..."
+  become: True
+  shell: "source {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/bin/activate {{ role_jupyterhub_install_env }} && {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin/conda install -y pyzmq={{ role_jupyterhub_pyzmq_version }}"
+  register: output_pyzmq_upgrade
+  failed_when: output_pyzmq_upgrade.rc > 0
+
+- name: "Upgrade ipykernel ..."
+  become: True
+  shell: "source {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/bin/activate {{ role_jupyterhub_install_env }} && {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin/conda install -y ipykernel={{ role_jupyterhub_ipykernel_version }}"
+  register: output_ipykernel_upgrade
+  failed_when: output_ipykernel_upgrade.rc > 0
+
+- name: "upgrade tornado ..."
+  become: True
+  shell: "source {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/bin/activate {{ role_jupyterhub_install_env }} && {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin/conda install -y tornado={{ role_jupyterhub_tornado_version }}"
+  register: output_tornado_upgrade
+  failed_when: output_tornado_upgrade.rc > 0
+
+- name: "Upgrading Jupyterhub DB"
+  become: True
+  shell: "source {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/bin/activate {{ role_jupyterhub_install_env }} && {{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin/jupyterhub upgrade-db"
+  ignore_errors: yes # this action might fail because of sqlite but a failing must not prevent the upgrade
+
+- name: "Starting JupyterHub..."
+  include: start.yml
+

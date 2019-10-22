@@ -1,0 +1,15 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Jupyterhub
+After=network.target
+
+[Service]
+User={{ role_jupyterhub_app_user }}
+Group={{ role_jupyterhub_app_group }}
+Environment=PATH={{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin:/usr/bin:{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/bin
+ExecStart={{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin/jupyterhub -f {{ role_jupyterhub_conf_file }}
+Restart=on-failure
+RestartSec=60s
+
+[Install]
+WantedBy=multi-user.target

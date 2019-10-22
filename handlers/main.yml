@@ -1,0 +1,8 @@
+---
+- name: "restart jupyterhub.service"
+  become: true
+  systemd:
+    name: jupyterhub
+    enabled: yes
+    state: restarted
+    daemon_reload: yes
