@@ -28,8 +28,3 @@
 - name: "Upgrading jupyterhub..."
   include: upgrade.yml
   when: state in ["role_jupyterhub_upgrade"]
-
-- name: "Add Nagios Checks"
-  include: check_nagios.yml
-  when: state in ["role_jupyterhub_nagios", "role_jupyterhub_whole_install"]
-
