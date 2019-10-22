@@ -52,19 +52,3 @@ role_jupyterhub_http_proxy_cmd: "{{ role_anaconda_env_bin_dir }}/configurable-ht
 
 ### PAM
 role_jupyterhub_pam_session: "False"
-
-## Sudoers
-role_jupyterhub_sudo: 
-  - socle_sudo_comment: "JUPYTERHUB"
-    socle_sudo_template_file_name: "00_sudo_template.j2"
-    socle_sudo_dest_file_name: "03_jupyterhub"
-    socle_sudo_remove_this_config: false
-    socle_sudo_defaults: ""
-    socle_sudo_user_alias: "HAD_JUPYTERHUB"
-    socle_sudo_users: "jupyterhub"
-    socle_sudo_usernames: "user jupyterhub"
-    socle_sudo_servers_alias: "HOSTS_HAD_JUPYTERHUB"
-    socle_sudo_servers_inventory_group: "DS"
-    socle_sudo_su_users: "ALL"
-    socle_sudo_nopassword: true
-    socle_sudo_command: "{{role_jupyterhub_anaconda_parent_dir}}/{{role_jupyterhub_anaconda_dir_name}}/envs/{{ role_jupyterhub_install_env }}/bin/sudospawner, /usr/bin/systemctl start jupyterhub.service, /usr/bin/systemctl stop jupyterhub.service, /usr/bin/systemctl restart jupyterhub.service, /usr/bin/systemctl status jupyterhub.service"
