@@ -11,8 +11,6 @@ Requirements
 
 Java version 1.8.0_73 and more
 
-Anaconda environnements installed, you can use the ansible role "https://sgithub.fr.world.socgen/BigDataHub-I2T/role_anaconda" to install environment.
-
 Inventory
 ---------
 

@@ -23,7 +23,6 @@ role_conda_pyenvs: ### Specifique packages
    state: present
    libs:
      - {name: "numpy", type: "conda", state: "present"}
-role_jupyterhub_mailing_list: "wandrille.a.domin@socgen.com, franck.vieira@socgen.com, marianne.bioy-ext@socgen.com, philippe.trigo@ext-socgen.com" #list contact when jupyterhub try to restart
 gpu_access: "false"
 
 ### SPAWNER

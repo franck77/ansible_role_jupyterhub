@@ -494,7 +494,7 @@
   cron:
     name: "Restart auto jupyterhub"
     user: "{{ role_jupyterhub_app_user_user }}"
-    job: "{{ role_jupyterhub_script_bin_dir }}/{{ role_jupyterhub_script_watchdog }} {{ inventory_hostname }}.haas.socgen {{ role_jupyterhub_port }} jupyter 1>>{{ role_jupyterhub_script_log_dir }}/{{ role_jupyerhub_script_watchdog_log }} 2>>{{ role_jupyterhub_script_log_dir }}/{{ role_jupyerhub_script_watchdog_error }}"
+    job: "{{ role_jupyterhub_script_bin_dir }}/{{ role_jupyterhub_script_watchdog }} {{ inventory_hostname }} {{ role_jupyterhub_port }} jupyter 1>>{{ role_jupyterhub_script_log_dir }}/{{ role_jupyerhub_script_watchdog_log }} 2>>{{ role_jupyterhub_script_log_dir }}/{{ role_jupyerhub_script_watchdog_error }}"
 
 ###
 

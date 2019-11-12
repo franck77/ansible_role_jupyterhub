@@ -2,8 +2,7 @@
 # Desc : Ce script permet de monitorer le process Rstudio-server, shiny-server et jupyter
 #         et relancer le process Rstudio toutes les 5s en cas d'echec
 #
-# Author  : Guy AKROMAN <guy.akroman-ext@socgen.com>
-#           Wandrille DOMIN <wandrille.a.domin@socgen.com> 
+# Author  : Guy AKROMAN 
 # Version : 0.4
 # Date    : 2018.08.10 -- Initialisation du script
 #           2018.08.27 -- Check health via curl
@@ -17,10 +16,6 @@ OUTIL=$3
 DAY=`date "+%Y%m%d"`
 LOG="/applis/$OUTIL/scripts/had/out/${DAY}_RstudioWatchdog.log"
 MAIL="/applis/$OUTIL/scripts/had/cfg/mail_alerte"
-#DEST="guy.akroman-ext@socgen.com,abdelmajid.draoui-ext@socgen.com,wandrille.a.domin@socgen.com"
-DEST="wandrille.a.domin@socgen.com,marianne.bioy-ext@socgen.com,franck.vieira@socgen.com"
-
-#status=`curl -s -k https://phadlx202.haas.socgen:8790/health-check`
 
 #MAIL_ALERTE=$(cat $MAIL | mail -s "[RUN][P] Edge `echo $SERVER` Datascience restart KO" $DEST)
 
@@ -28,7 +23,7 @@ function usage() {
    echo -e " \t----------------------------------------------------------------------"
    echo -e " \tPour lancer le script, il faut lui donner les 3 arguments suivants :  "
    echo -e " \t./rstudio_watchdog.sh <FQDN server> <port> <outil>"
-   echo -e " \tEx: ./rstudio_watchdog.sh phadlx00.haas.socgen 0000 (rstudio|jupyter|shiny)"
+   echo -e " \tEx: ./rstudio_watchdog.sh host1 0000 (rstudio|jupyter|shiny)"
    echo -e " \t----------------------------------------------------------------------"
 }
 
@@ -37,7 +32,6 @@ function restartRstudio() {
   URL="https://$SERVER:$PORT/health-check"
   #set -x
   # check du statut de rstudio
-  #RstudioStatus=$(curl -k "https://phadlx204.haas.socgen:8841/health-check" >/dev/null 2>&1)
   RstudioStatus=$(curl -k "$URL" >/dev/null 2>&1)
   RstudioVal=$?
 
